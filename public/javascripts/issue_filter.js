@@ -1,5 +1,5 @@
 var assigneeCheckboxGroup;
-var assignees = {"apac": [], "brazil": [], "eu": [], "india": [], "japan": [], "spain": [], "us": [], "global": [], "no-region": []};
+var assignees = {"apac": {}, "brazil": {}, "eu": {}, "india": {}, "japan": {}, "spain": {}, "us": {}, "global": {}, "no-region": {}};
 var clearFilters;
 var dependencies = ['Backport Review', 'Code Review', 'CS/Customer', 'Internal Environment', 'LPS Escalation', 'Other LPP', 'Patcher Portal Automated Support Testing', 'Patcher Portal Hotfix Building', 'PTR', 'SME Request', 'Support Policy Question', 'Support Related Test at Product QA'];
 var filters;
@@ -65,59 +65,51 @@ function addFilter(filter, filterName, filterGroup) {
   )
 }
 
-function buildAssigneeCheckboxes(regions, selectedAssignees) {
-  var assigneeCheckboxes = new Set();
-  var assigneesToUncheck = [];
-  var regionAssignees = [];
+function buildUserCheckboxes(filterType, checkboxGroup, allUsers, selectedUsers) {
+  var allUsersList = Object.keys(allUsers)
+    .map(function(x) {
+      return [x, allUsers[x]]
+    })
+    .sort(function(a, b) {
+      return a[1].localeCompare(b[1]);
+    });
 
-  if (selectedAssignees) {
-    assigneesToUncheck = selectedAssignees.slice();
-  }
+  $('div[filter-type=' + filterType + ']').empty();
 
-  $('div[filter-type=assignee]').empty();
+  var checkboxes = allUsersList.map(function(user) {
+    var checked = selectedUsers && (selectedUsers.indexOf(user[0]) != -1);
 
-  if (!regions || regions.length === 0) {
-    regions = Object.keys(assignees);
-  }
-
-  for (var i = 0; i < regions.length; i++) {
-    var region = regions[i].replace(/\./g, '');
-
-    regionAssignees = regionAssignees.concat(assignees[region]);
-  }
-
-  regionAssignees.sort(function(a, b) {
-    return a.localeCompare(b);
+    return '<label>' + '<input data-filter="' + user[0] + '"' +
+      (checked ? ' checked' : '') + ' type="checkbox">' + user[1] + '</label>';
   });
 
-  for (var j = 0; j < regionAssignees.length; j++) {
-    var assignee = regionAssignees[j].split("|");
+  if (selectedUsers) {
+    selectedUsers
+      .filter(function(x) { return !(x in allUsers); })
+      .forEach(function(user) {
+        selectedUsers.splice(selectedUsers.indexOf(user), 1);
 
-    var checked = false;
-
-    if (selectedAssignees && (selectedAssignees.indexOf(assignee[0]) > -1)) {
-      assigneesToUncheck.splice(assigneesToUncheck.indexOf(assignee[0]), 1);
-
-      checked = true;
-    }
-
-    assigneeCheckboxes.add(
-      '<label>' +
-      '<input data-filter="' + assignee[0] + '" type="checkbox"' + (checked ? 'checked' : '') + '>' +
-      assignee[1] +
-      '</label>'
-    );
+        removeFilter(user);
+      });
   }
 
-  if (assigneesToUncheck && (assigneesToUncheck.length > 0)) {
-    for (var k = 0; k < assigneesToUncheck.length; k++) {
-      selectedAssignees.splice(selectedAssignees.indexOf(assigneesToUncheck[k]), 1);
+  checkboxGroup.append(checkboxes);
+}
 
-      removeFilter(assigneesToUncheck[k]);
-    }
+function buildAssigneeCheckboxes(selectedRegions, selectedAssignees) {
+  var regionAssignees = {};
+
+  if (!selectedRegions || selectedRegions.length === 0) {
+    selectedRegions = Object.keys(assignees);
   }
 
-  assigneeCheckboxGroup.append(Array.from(assigneeCheckboxes));
+  for (var i = 0; i < selectedRegions.length; i++) {
+    var region = selectedRegions[i].replace(/\./g, '');
+
+    Object.assign(regionAssignees, assignees[region]);
+  }
+
+  buildUserCheckboxes('assignee', assigneeCheckboxGroup, regionAssignees, selectedAssignees);
 }
 
 function filterByUrlParameters() {
@@ -211,6 +203,29 @@ function getIssueUpdateStatus(issue) {
   }
 }
 
+function getHTMLClasses(issue, issueDependencies, issueRegion, issueUpdateStatus) {
+  var htmlClasses = [
+    'issue-element',
+    issueDependencies,
+    issue.issueType,
+    issue.priority,
+    issueRegion,
+    issueUpdateStatus,
+    issue.assignee.filterKey,
+    'watcher-' + issue.assignee.filterKey
+  ];
+
+  if (issue.status === "Blocked") {
+    htmlClasses.push('blocked');
+  }
+
+  if (issue.flagged) {
+    htmlClasses.push('flagged');
+  }
+
+  return htmlClasses;
+}
+
 function populateIssueGrid() {
   issues.forEach(function(issue) {
     var issueRegion = issue.region || 'no-region';
@@ -218,25 +233,22 @@ function populateIssueGrid() {
     var issueUpdateStatus = getIssueUpdateStatus(issue);
 
     grid.append(
-      '<div class="issue-element ' + (issue.status === "Blocked" ? 'blocked ' : '') + (issue.flagged ? 'flagged ' : '') + issueDependencies + issue.issueType + ' ' + issue.priority + ' ' + issueRegion + ' ' + issue.assignee + ' ' + issueUpdateStatus + '">' +
+      '<div class="' + getHTMLClasses(issue, issueDependencies, issueRegion, issueUpdateStatus).join(' ') + '">' +
         '<div class="issue-update issue-' + issueUpdateStatus + '"/>' +
         '<div class="issue-details">' +
           '<a href="https://issues.liferay.com/browse/' + issue.key + '" target=”_blank”>' + issue.key + '</a>' +
           '<img class="issue-icon-priority" src="/images/' + issue.priority + '.svg" />' +
           '<img class="issue-icon" src="/images/' + issue.issueType + '.svg" />' +
           (issue.flagged ? '<img class="issue-icon-flag" src="/images/flag.svg" />' : '') +
-          '<span class="issue-assignee">' + issue.assigneeDisplayName + ' </span> <br> <br>' +
+          '<span class="issue-assignee">' + issue.assignee.displayName + ' </span> <br> <br>' +
           '<span class="issue-summary">' + issue.summary + '</span>' +
           (issue.openDependencies ? '<br> <br> <span class="issue-summary">' + issue.openDependencies.join(", ") + '</span>' : '') +
         '</div>' +
       '</div>'
     );
 
-    var assignee = "." + issue.assignee + "|" + issue.assigneeDisplayName;
+    assignees[issueRegion]["." + issue.assignee.filterKey] = issue.assignee.displayName;
 
-    if (assignees[issueRegion].indexOf(assignee) < 0) {
-      assignees[issueRegion].push(assignee);
-    }
   });
 }
 
