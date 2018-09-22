@@ -8,6 +8,10 @@ var jira = new JiraClient( {
     }
 });
 
+function getHTMLClassName(key) {
+  return key.replace(/[^a-zA-Z0-9\-_]/g, "-")
+}
+
 function fetchIssueMetadata(issueKeys, start, issues, callback) {
   var sliceSize = 20;
   var end = start + sliceSize;
@@ -18,7 +22,7 @@ function fetchIssueMetadata(issueKeys, start, issues, callback) {
     jql: 'key in (' + issueKeys.splice(0, sliceSize).join(',') + ')',
     maxResults: 500,
     fields: [
-      'key', 'fixVersions', 'customfield_12120', 'priority',
+      'key', 'fixVersions', 'customfield_12120', 'priority', 'watches',
       'customfield_10731', 'assignee', 'status', 'components', 'issuetype',
       'customfield_19120', 'customfield_20321', 'customfield_20527', 'summary',
       'duedate', 'comment', 'customfield_11523',
@@ -35,14 +39,7 @@ function fetchIssueMetadata(issueKeys, start, issues, callback) {
       issues = issues.concat(response.issues);
 
       if (issueKeys.length === 0) {
-        console.log("Writing issues to file");
-
-        fs.writeFile("issues.json", JSON.stringify(
-          issues.map(trimIssue)
-            .sort(function (a, b) {
-              return a.key > b.key ? 1 : a.key < b.key ? -1 : 0;
-            })
-        ), callback);
+        fetchIssueWatchers(issues, callback);
       }
       else {
         fetchIssueMetadata(issueKeys, start + sliceSize, issues, callback);
@@ -51,15 +48,74 @@ function fetchIssueMetadata(issueKeys, start, issues, callback) {
  });
 }
 
+function fetchIssueWatchers(issues, callback) {
+  var trimmedIssues = issues.map(trimIssue);
+  var remaining = issues.length;
+
+  console.log('Populating issue watchers');
+
+  trimmedIssues.forEach(function(x) {
+    if (x.watchCount > 0) {
+      jira.issue.getWatchers({
+        'issueKey': x.key
+      }, function(error, response) {
+        if (error) {
+          console.log("Error = " + JSON.stringify(error));
+        }
+        else {
+          x.watchers = response.watchers.map(function(y) {
+            return { 'filterKey': getHTMLClassName(y.key), 'displayName': y.displayName };
+          });
+
+          if (--remaining == 0) {
+            writeIssues(trimmedIssues, callback);
+          }
+        }
+      });
+    }
+    else {
+      x.watchers = [];
+
+      if (--remaining == 0) {
+        writeIssues(trimmedIssues, callback);
+      }
+    }
+  });
+}
+
+function writeIssues(trimmedIssues, callback) {
+  console.log("Writing issues to file");
+
+  fs.writeFile("issues.json", JSON.stringify(
+      trimmedIssues.sort(function (a, b) {
+        return a.key > b.key ? 1 : a.key < b.key ? -1 : 0;
+      })
+  ), callback);
+}
+
 function fetchIssues(callback) {
   console.log("Fetching issues");
 
+  var memberOfTS = [
+   'membersOf(liferay-support-ts)',
+   'membersOf(liferay-support-ts-us)',
+   'support-hu'
+  ].join(',');
+
+  var resolvedStatuses = [
+    '"Resolved"',
+    '"Completed"',
+    '"Solution Proposed"',
+    '"Closed"',
+    '"Audit"',
+    '"On Hold"'
+  ].join(',');
+
   jira.search.search({
     jql: `
-      project = LPP AND status NOT IN ("Resolved", "Completed",
-      "Solution Proposed", "Closed", "Audit", "On Hold") AND assignee IN
-      (membersOf(liferay-support-ts), membersOf(liferay-support-ts-us),
-      support-hu) AND ("TS Solution Delivered" IN (EMPTY, No) OR type != Patch)
+      project = LPP AND status NOT IN (${resolvedStatuses}) AND
+      (assignee IN (${memberOfTS}) OR watcher IN (${memberOfTS})) AND
+      ("TS Solution Delivered" IN (EMPTY, No) OR type != Patch)
     `.split('\n').join(''),
     maxResults: 500,
     fields: [
@@ -205,8 +261,11 @@ function trimIssue(issue) {
   trimmedIssue.lesaLink = issue.fields.customfield_10731;
   trimmedIssue.status = issue.fields.status.name;
   trimmedIssue.dueDate = issue.fields.duedate;
-  trimmedIssue.assignee = issue.fields.assignee.key.replace(/\./g, "-");
-  trimmedIssue.assigneeDisplayName = issue.fields.assignee.displayName;
+  trimmedIssue.watchCount = issue.fields.watches.watchCount;
+  trimmedIssue.assignee = {
+    'filterKey': getHTMLClassName(issue.fields.assignee.key),
+    'displayName': issue.fields.assignee.displayName
+  };
 
   if (issue.fields.components) {
     trimmedIssue.component = issue.fields.components.map(function(component) {

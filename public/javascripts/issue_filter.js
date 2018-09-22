@@ -97,7 +97,9 @@ function buildUserCheckboxes(filterType, checkboxGroup, allUsers, selectedUsers)
 }
 
 function buildAssigneeCheckboxes(selectedRegions, selectedAssignees) {
-  var regionAssignees = {};
+  var regionAssignees = {
+    '.WATCHER': '(watcher)'
+  };
 
   if (!selectedRegions || selectedRegions.length === 0) {
     selectedRegions = Object.keys(assignees);
@@ -215,6 +217,10 @@ function getHTMLClasses(issue, issueDependencies, issueRegion, issueUpdateStatus
     'watcher-' + issue.assignee.filterKey
   ];
 
+  issue.watchers.forEach(function(x) {
+    htmlClasses.push('watcher-' + x.filterKey);
+  });
+
   if (issue.status === "Blocked") {
     htmlClasses.push('blocked');
   }
@@ -248,7 +254,6 @@ function populateIssueGrid() {
     );
 
     assignees[issueRegion]["." + issue.assignee.filterKey] = issue.assignee.displayName;
-
   });
 }
 
@@ -291,7 +296,23 @@ function updateIssueGrid() {
     var groupFilter = groupFilters[key];
 
     if (groupFilter.length) {
-      filters.push(groupFilters[key]);
+      if (key == 'assignee') {
+        var includeWatcher = groupFilter.indexOf('.WATCHER') != -1;
+
+        if (includeWatcher) {
+          groupFilter = groupFilter.filter(function(assignee) {
+            return assignee != '.WATCHER';
+          });
+
+          var watcherFilter = groupFilter.map(function(assignee) {
+            return '.watcher-' + assignee.substring(1);
+          });
+
+          groupFilter = groupFilter.concat(watcherFilter);
+        }
+      }
+
+      filters.push(groupFilter);
     }
   }
 
