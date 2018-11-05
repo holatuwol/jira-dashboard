@@ -1,6 +1,7 @@
 var assigneeCheckboxGroup;
 var assignees = {"apac": [], "brazil": [], "eu": [], "india": [], "japan": [], "spain": [], "us": [], "no-region": []};
 var clearFilters;
+var dependencies = ['Backport Review', 'Code Review', 'CS/Customer', 'Internal Environment', 'LPS Escalation', 'Other LPP', 'Patcher Portal Automated Support Testing', 'Patcher Portal Hotfix Building', 'PTR', 'SME Request', 'Support Policy Question', 'Support Related Test at Product QA'];
 var filters;
 var grid;
 var groupFilters = {};
@@ -166,6 +167,19 @@ function getFilterCombinations(arr) {
   }, [[]])
 }
 
+function getIssueDependencies(issue) {
+  var dependencyList = '';
+
+  if (issue.openDependencies) {
+    issue.openDependencies.forEach(function(dependency) {
+      if (dependencies.indexOf(dependency) > -1) {
+        dependencyList += (dependency.replace(/\s+/g, '-').toLowerCase() + ' ');
+      }
+    });
+  }
+  return dependencyList;
+}
+
 function getIssueUpdateStatus(issue) {
   var hours;
 
@@ -199,10 +213,11 @@ function getIssueUpdateStatus(issue) {
 function populateIssueGrid() {
   issues.forEach(function(issue) {
     var issueRegion = issue.region || 'no-region';
+    var issueDependencies = getIssueDependencies(issue);
     var issueUpdateStatus = getIssueUpdateStatus(issue);
 
     grid.append(
-      '<div class="issue-element ' + issue.issueType + ' ' + issue.priority + ' ' + (issue.status === "Blocked" ? 'blocked ' : '') + (issue.flagged ? 'flagged ' : '') + issueRegion + ' ' + issue.assignee + ' ' + issueUpdateStatus + '">' +
+      '<div class="issue-element ' + issue.issueType + ' ' + issue.priority + ' ' + (issue.status === "Blocked" ? 'blocked ' : '') + (issue.flagged ? 'flagged ' : '') + issueRegion + ' ' + issue.assignee + ' ' + issueUpdateStatus + (issueDependencies ? ' ' + issueDependencies : '') + '">' +
         '<div class="issue-update issue-' + issueUpdateStatus + '"/>' +
         '<div class="issue-details">' +
           '<a href="https://issues.liferay.com/browse/' + issue.key + '" target=”_blank”>' + issue.key + '</a>' +

@@ -84,6 +84,49 @@ block content
           input(data-filter=".needs-update" type="checkbox")
           | Needs Update
       h3(class="accordion")
+        | Dependencies
+        div(class="arrow")
+      div(class="accordion-content", filter-type="dependencies")
+        label
+          input(data-filter=".backport-review" type="checkbox")
+          | Backport Review
+        label
+          input(data-filter=".code-review" type="checkbox")
+          | Code Review
+        label
+          input(data-filter=".cs/customer" type="checkbox")
+          | CS/Customer
+        label
+          input(data-filter=".internal-environment" type="checkbox")
+          | Internal Environment
+        label
+          input(data-filter=".lps-escalation" type="checkbox")
+          | LPS Escalation
+        label
+          input(data-filter=".none" type="checkbox")
+          | None
+        label
+          input(data-filter=".other-lpp" type="checkbox")
+          | Other LPP
+        label
+          input(data-filter=".patcher-portal-automated-support-testing" type="checkbox")
+          | Patcher Portal Automated Support Testing
+        label
+          input(data-filter=".patcher-portal-hotfix-building" type="checkbox")
+          | Patcher Portal Hotfix Building
+        label
+          input(data-filter=".ptr" type="checkbox")
+          | PTR
+        label
+          input(data-filter=".sme-request" type="checkbox")
+          | SME Request
+        label
+          input(data-filter=".support-policy-question" type="checkbox")
+          | Support Policy Question
+        label
+          input(data-filter=".support-related-test-at-product-qa" type="checkbox")
+          | Support Related Test at Product QA
+      h3(class="accordion")
         | Status
         div(class="arrow")
       div(class="accordion-content", filter-type="status")
