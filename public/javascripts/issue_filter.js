@@ -177,6 +177,7 @@ function getIssueDependencies(issue) {
       }
     });
   }
+
   return dependencyList;
 }
 
@@ -217,7 +218,7 @@ function populateIssueGrid() {
     var issueUpdateStatus = getIssueUpdateStatus(issue);
 
     grid.append(
-      '<div class="issue-element ' + issue.issueType + ' ' + issue.priority + ' ' + (issue.status === "Blocked" ? 'blocked ' : '') + (issue.flagged ? 'flagged ' : '') + issueRegion + ' ' + issue.assignee + ' ' + issueUpdateStatus + (issueDependencies ? ' ' + issueDependencies : '') + '">' +
+      '<div class="issue-element ' + (issue.status === "Blocked" ? 'blocked ' : '') + (issue.flagged ? 'flagged ' : '') + issueDependencies + issue.issueType + ' ' + issue.priority + ' ' + issueRegion + ' ' + issue.assignee + ' ' + issueUpdateStatus + '">' +
         '<div class="issue-update issue-' + issueUpdateStatus + '"/>' +
         '<div class="issue-details">' +
           '<a href="https://issues.liferay.com/browse/' + issue.key + '" target=”_blank”>' + issue.key + '</a>' +
