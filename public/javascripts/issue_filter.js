@@ -173,7 +173,7 @@ function getIssueDependencies(issue) {
   if (issue.openDependencies) {
     issue.openDependencies.forEach(function(dependency) {
       if (dependencies.indexOf(dependency) > -1) {
-        dependencyList += (dependency.replace(/\s+/g, '-').toLowerCase() + ' ');
+        dependencyList += (dependency.replace(/[\s\/]+/g, '-').toLowerCase() + ' ');
       }
     });
   }
