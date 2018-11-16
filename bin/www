@@ -35,7 +35,9 @@ server.on('error', onError);
  */
 
 function scheduleFetchIssues() {
-  cron.schedule('*/15 * * * *', issues.fetchIssues);
+  cron.schedule('*/15 * * * *', function() {
+    issues.fetchIssues(function() {});
+  });
 }
 
 fs.lstat('issues.json', function(err, stats) {
