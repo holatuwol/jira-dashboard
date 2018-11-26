@@ -1,5 +1,5 @@
 var assigneeCheckboxGroup;
-var assignees = {"apac": [], "brazil": [], "eu": [], "india": [], "japan": [], "spain": [], "us": [], "no-region": []};
+var assignees = {"apac": [], "brazil": [], "eu": [], "india": [], "japan": [], "spain": [], "us": [], "global": [], "no-region": []};
 var clearFilters;
 var dependencies = ['Backport Review', 'Code Review', 'CS/Customer', 'Internal Environment', 'LPS Escalation', 'Other LPP', 'Patcher Portal Automated Support Testing', 'Patcher Portal Hotfix Building', 'PTR', 'SME Request', 'Support Policy Question', 'Support Related Test at Product QA'];
 var filters;
