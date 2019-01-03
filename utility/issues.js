@@ -54,17 +54,20 @@ function fetchIssueWatchers(issues, callback) {
 
   console.log('Populating issue watchers');
 
-  trimmedIssues.forEach(function(x) {
-    if (x.watchCount > 0) {
+  trimmedIssues.forEach(function(trimmedIssue) {
+    if (trimmedIssue.watchCount > 0) {
       jira.issue.getWatchers({
-        'issueKey': x.key
+        'issueKey': trimmedIssue.key
       }, function(error, response) {
         if (error) {
           console.log("Error = " + JSON.stringify(error));
         }
         else {
-          x.watchers = response.watchers.map(function(y) {
-            return { 'filterKey': getHTMLClassName(y.key), 'displayName': y.displayName };
+          trimmedIssue.watchers = response.watchers.map(function(watcher) {
+            return {
+              'filterKey': getHTMLClassName(watcher.key),
+              'displayName': watcher.displayName
+            };
           });
 
           if (--remaining == 0) {
@@ -74,7 +77,7 @@ function fetchIssueWatchers(issues, callback) {
       });
     }
     else {
-      x.watchers = [];
+      trimmedIssue.watchers = [];
 
       if (--remaining == 0) {
         writeIssues(trimmedIssues, callback);

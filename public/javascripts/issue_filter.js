@@ -67,8 +67,8 @@ function addFilter(filter, filterName, filterGroup) {
 
 function buildUserCheckboxes(filterType, checkboxGroup, allUsers, selectedUsers) {
   var allUsersList = Object.keys(allUsers)
-    .map(function(x) {
-      return [x, allUsers[x]]
+    .map(function(user) {
+      return [user, allUsers[user]]
     })
     .sort(function(a, b) {
       return a[1].localeCompare(b[1]);
@@ -85,7 +85,9 @@ function buildUserCheckboxes(filterType, checkboxGroup, allUsers, selectedUsers)
 
   if (selectedUsers) {
     selectedUsers
-      .filter(function(x) { return !(x in allUsers); })
+      .filter(function(selectedUser) {
+        return !(selectedUser in allUsers);
+      })
       .forEach(function(user) {
         selectedUsers.splice(selectedUsers.indexOf(user), 1);
 
@@ -215,8 +217,8 @@ function getHTMLClasses(issue, issueDependencies, issueRegion, issueUpdateStatus
     'watcher-' + issue.assignee.filterKey
   ];
 
-  issue.watchers.forEach(function(x) {
-    htmlClasses.push('watcher-' + x.filterKey);
+  issue.watchers.forEach(function(watcher) {
+    htmlClasses.push('watcher-' + watcher.filterKey);
   });
 
   if (issue.status === "Blocked") {
