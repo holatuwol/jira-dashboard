@@ -97,9 +97,7 @@ function buildUserCheckboxes(filterType, checkboxGroup, allUsers, selectedUsers)
 }
 
 function buildAssigneeCheckboxes(selectedRegions, selectedAssignees) {
-  var regionAssignees = {
-    '.WATCHER': '(watcher)'
-  };
+  var regionAssignees = {};
 
   if (!selectedRegions || selectedRegions.length === 0) {
     selectedRegions = Object.keys(assignees);
@@ -295,15 +293,11 @@ function updateIssueGrid() {
   for (var key in groupFilters) {
     var groupFilter = groupFilters[key];
 
+    var includeWatchedTickets = (groupFilters["include-watched-tickets"] !== undefined) && groupFilters["include-watched-tickets"].length;
+
     if (groupFilter.length) {
       if (key == 'assignee') {
-        var includeWatcher = groupFilter.indexOf('.WATCHER') != -1;
-
-        if (includeWatcher) {
-          groupFilter = groupFilter.filter(function(assignee) {
-            return assignee != '.WATCHER';
-          });
-
+        if (includeWatchedTickets) {
           var watcherFilter = groupFilter.map(function(assignee) {
             return '.watcher-' + assignee.substring(1);
           });
@@ -311,12 +305,15 @@ function updateIssueGrid() {
           groupFilter = groupFilter.concat(watcherFilter);
         }
       }
+      else if (key == 'include-watched-tickets') {
+        continue;
+      }
 
       filters.push(groupFilter);
     }
   }
 
-  if (filters.length) {
+  if (filters.length || includeWatchedTickets) {
     clearFilters.show();
   }
   else {

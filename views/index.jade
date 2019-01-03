@@ -143,6 +143,10 @@ block content
         | Assignee
         div(class="arrow")
       div(class="accordion-content", filter-type="assignee", id="assignee-checkbox-group")
+      div(filter-type="include-watched-tickets")
+        label
+          input(data-filter=".true" type="checkbox")
+          | Include Watched Tickets
     div(class="selected-filters-container")
       div(class="selected-filters", id="selected-filters")
       div(class="clear-filters", id="clear-filters")
