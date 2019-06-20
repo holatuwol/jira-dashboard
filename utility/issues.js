@@ -260,7 +260,7 @@ function trimIssue(issue) {
   trimmedIssue.summary = issue.fields.summary;
   trimmedIssue.issueType = issue.fields.issuetype.name.toLowerCase().replace(/ /g, "-");
   trimmedIssue.priority = issue.fields.priority.name.toLowerCase();
-  trimmedIssue.region = regionField ? regionField[0].value.toLowerCase() : null;
+  trimmedIssue.region = regionField ? regionField[0].value.toLowerCase().replace(/\//g, "-") : null;
   trimmedIssue.lesaLink = issue.fields.customfield_10731;
   trimmedIssue.status = issue.fields.status.name;
   trimmedIssue.dueDate = issue.fields.duedate;
